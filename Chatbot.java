@@ -16,9 +16,11 @@ public class Chatbot {
             connection.setRequestProperty("Authorization", "Bearer " + API_KEY);
             connection.setDoOutput(true);
 
+            // Request with max_tokens
             String jsonInput = "{"
                     + "\"model\": \"llama-3.1-8b-instant\","
-                    + "\"messages\": [{\"role\": \"user\", \"content\": \"" + userMessage + "\"}]"
+                    + "\"messages\": [{\"role\": \"user\", \"content\": \"" + userMessage + "\"}],"
+                    + "\"max_tokens\": 2000"
                     + "}";
 
             try (OutputStream os = connection.getOutputStream()) {
@@ -56,9 +58,27 @@ public class Chatbot {
 
     private static String parseResponse(String jsonResponse) {
         try {
-            int startIndex = jsonResponse.indexOf("\"content\":\"") + "\"content\":\"".length();
-            int endIndex = jsonResponse.indexOf("\"", startIndex);
-            String botMessage = jsonResponse.substring(startIndex, endIndex);
+            // Extract content from the response manually
+            int choicesStartIndex = jsonResponse.indexOf("\"choices\":") + 10;
+            int choicesEndIndex = jsonResponse.indexOf("]", choicesStartIndex);
+            String choicesContent = jsonResponse.substring(choicesStartIndex, choicesEndIndex);
+
+            // Find the message content within the choices
+            int messageStartIndex = choicesContent.indexOf("\"content\":") + 11;
+            int messageEndIndex = choicesContent.indexOf("\"", messageStartIndex);
+            String botMessage = choicesContent.substring(messageStartIndex, messageEndIndex);
+
+            // Remove Markdown-style bold formatting (**)
+            botMessage = botMessage.replace("**", "");
+
+            // Check if the response is incomplete (ends abruptly)
+            if (botMessage.endsWith(":") || botMessage.endsWith("\\")) {
+                botMessage += "\n[Response might be incomplete. Please ask again for continuation.]";
+            }
+
+            // Replace escape sequences like \n with actual newlines
+            botMessage = botMessage.replace("\\n", "\n").replace("\\", "");
+
             return botMessage;
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,7 +101,11 @@ public class Chatbot {
             }
 
             String botResponse = getChatbotResponse(userMessage);
-            System.out.println("Bot: " + botResponse);
+
+            // Add a line space before the bot's response
+            System.out.println();
+            System.out.println("Bot:\n" + botResponse);
+            System.out.println();
         }
 
         scanner.close();
