@@ -31,8 +31,8 @@ Follow the steps below to set up and run the project:
 Clone this repository using the command below:
 
 ```bash
-git clone https://github.com/Chris-Lopes/java-ai-chatbot.git
-cd java-ai-chatbot
+git clone https://github.com/Chris-Lopes/AI-Chatbot-JAVA.git
+cd AI-Chatbot-JAVA
 ```
 
 ## Usage
